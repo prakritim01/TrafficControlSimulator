@@ -1,6 +1,6 @@
-
 from __future__ import annotations
 
+import argparse
 from pathlib import Path
 import time
 
@@ -25,12 +25,29 @@ from traffic import (
 from visualize import save_metrics_csv, save_metrics_plot, save_space_time_diagrams
 
 
+def parse_args():
+    parser = argparse.ArgumentParser(description="Distributed Traffic Simulator")
+    parser.add_argument("--lanes", type=int, default=3, help="Number of lanes")
+    parser.add_argument("--steps", type=int, default=180, help="Simulation steps")
+    parser.add_argument("--density", type=float, default=0.30, help="Initial traffic density")
+    return parser.parse_args()
+
+
 def main() -> None:
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
     size = comm.Get_size()
 
-    cfg = SimulationConfig()
+    # Parse command line arguments
+    args = parse_args()
+
+    # Inject dynamic arguments into the configuration
+    cfg = SimulationConfig(
+        lanes=args.lanes,
+        steps=args.steps,
+        initial_density=args.density
+    )
+    
     if rank == 0:
         cfg.validate()
         cfg.output_dir.mkdir(parents=True, exist_ok=True)
